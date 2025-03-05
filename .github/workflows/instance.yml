@@ -48,6 +48,9 @@ jobs:
 
        - name: List EC2 Instances
          run: |
-           aws ec2 describe-instances \
-             --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' \
-             --output table
+           instances=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' --output table)
+           if [ -z "$instances" ]; then
+             echo "No instances found."
+           else
+             echo "$instances"
+           fi
