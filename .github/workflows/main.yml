@@ -37,7 +37,7 @@ jobs:
           jq '.' all_alerts.json
 
       - name: Upload Alerts as Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: code-scanning-alerts
           path: all_alerts.json
