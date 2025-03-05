@@ -15,8 +15,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        aws-access-key-id: "AKIA6JKEXY2NB5F65KEP"
-        aws-secret-access-key: "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"
+        aws-access-key-id: "AKIA6JKESXY2NB5F65KEP"
+        aws-secret-access-key: "Z9vmhdSTIPoQIuSyQuSgmjxfsrqO8I+bvL5MZ14es"
         aws-region: "ap-south-1"
 
     - name: List EC2 Instances
