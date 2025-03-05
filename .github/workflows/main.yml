@@ -1,0 +1,32 @@
+name: Create AWS EC2 Instance
+
+on:
+  workflow_dispatch: 
+
+jobs:
+  create-instance:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Launch EC2 Instance
+      run: |
+        INSTANCE_ID=$(aws ec2 run-instances \
+          --image-id ami-0abcdef1234567890 \  # Replace with your AMI ID
+          --count 1 \
+          --instance-type t2.micro \
+          --key-name MyKeyPair \  # Replace with your key pair name
+          --security-groups MySecurityGroup \  # Replace with your security group
+          --query 'Instances[0].InstanceId' \
+          --output text)
+
+        echo "EC2 Instance Created: $INSTANCE_ID"
