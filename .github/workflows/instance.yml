@@ -1,4 +1,4 @@
-name: Create AWS EC2 Instance
+name: list AWS EC2 Instance
 
 on:
   workflow_dispatch: 
