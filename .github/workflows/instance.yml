@@ -4,7 +4,7 @@ on:
   workflow_dispatch: 
 
 jobs:
-  create-instance:
+   List EC2 Instances:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,15 +23,8 @@ jobs:
         #aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         #aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Launch EC2 Instance
+    - name: List EC2 Instances
       run: |
-        INSTANCE_ID=$(aws ec2 run-instances \
-          --image-id ami-0abcdef1234567890 \  # Replace with your AMI ID
-          --count 1 \
-          --instance-type t2.micro \
-          --key-name MyKeyPair \  # Replace with your key pair name
-          --security-groups MySecurityGroup \  # Replace with your security group
-          --query 'Instances[0].InstanceId' \
-          --output text)
-
-        echo "EC2 Instance Created: $INSTANCE_ID"
+        aws ec2 describe-instances \
+          --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' \
+          --output table
