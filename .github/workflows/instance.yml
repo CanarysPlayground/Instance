@@ -3,7 +3,7 @@ name: Create AWS EC2 Instance
 on:
   workflow_dispatch: 
 jobs:
-   List-EC2-Instances:
+   List-EC2-Instances1:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,18 +29,25 @@ jobs:
           --output table
 
           
+   List-EC2-Instances2:
+     runs-on: ubuntu-latest
+     environment: instancetest
+     needs: List-EC2-Instances1
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      env: instancetest
-      with:
+     steps:
+       - name: Checkout repository
+         uses: actions/checkout@v4
+      
+       - name: Configure AWS credentials
+         uses: aws-actions/configure-aws-credentials@v2
+         with:
         
-        aws-access-key-id: ${{ secrets.ACCESS_KEY_ }}
-        aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.REGION }}
+           aws-access-key-id: ${{ secrets.ACCESS_KEY_ }}
+           aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
+           aws-region: ${{ secrets.REGION }}
 
-    - name: List EC2 Instances
-      run: |
-        aws ec2 describe-instances \
-          --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' \
-          --output table
+       - name: List EC2 Instances
+         run: |
+           aws ec2 describe-instances \
+             --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' \
+             --output table
