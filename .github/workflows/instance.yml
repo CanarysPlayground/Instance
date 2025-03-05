@@ -27,3 +27,20 @@ jobs:
         aws ec2 describe-instances \
           --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' \
           --output table
+
+          
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      env: instancetest
+      with:
+        
+        aws-access-key-id: ${{ secrets.ACCESS_KEY_ }}
+        aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.REGION }}
+
+    - name: List EC2 Instances
+      run: |
+        aws ec2 describe-instances \
+          --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' \
+          --output table
