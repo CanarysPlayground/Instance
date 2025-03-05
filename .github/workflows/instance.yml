@@ -1,7 +1,9 @@
+
 name: list AWS EC2 Instance
 
 on:
   workflow_dispatch: 
+
 jobs:
    List-EC2-Instances1:
     runs-on: ubuntu-latest
@@ -17,18 +19,17 @@ jobs:
         aws-secret-access-key: "Z9vmhdTIPoQIuSyQuSgmjxfsrqO8I+bvL5MZ14es"
         aws-region: "ap-south-1"
 
-        
-        #aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        #aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        #aws-region: ${{ secrets.AWS_REGION }}
-
     - name: List EC2 Instances
       run: |
-        aws ec2 describe-instances \
+        instances=$(aws ec2 describe-instances --filters "Name=instance-state-name,Values=pending,running,shutting-down,stopping,stopped" \
           --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' \
-          --output table
+          --output table)
+        if [ -z "$instances" ]; then
+          echo "No instances found."
+        else
+          echo "$instances"
+        fi
 
-          
    List-EC2-Instances2:
      runs-on: ubuntu-latest
      environment: instancetest
@@ -41,14 +42,15 @@ jobs:
        - name: Configure AWS credentials
          uses: aws-actions/configure-aws-credentials@v2
          with:
-        
            aws-access-key-id: ${{ secrets.ACCESS_KEY }}
            aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
            aws-region: ${{ secrets.REGION }}
 
        - name: List EC2 Instances
          run: |
-           instances=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' --output table)
+           instances=$(aws ec2 describe-instances --filters "Name=instance-state-name,Values=pending,running,shutting-down,stopping,stopped" \
+             --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' \
+             --output table)
            if [ -z "$instances" ]; then
              echo "No instances found."
            else
