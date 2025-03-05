@@ -16,7 +16,7 @@ jobs:
       with:
         aws-access-key-id: "AKIA6JKEXY2NB5F65KEP"
         aws-secret-access-key: "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"
-        aws-region: "Global"
+        aws-region: "ap-south-1"
 
         
         #aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
