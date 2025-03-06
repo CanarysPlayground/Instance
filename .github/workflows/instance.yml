@@ -3,7 +3,7 @@ name: list AWS EC2 Instance
 on:
   workflow_dispatch: 
   schedule:
-    - cron: '32 11 * * *'
+    - cron: '45 11 * * *'
 
 jobs:
    List-EC2-Instances1:
