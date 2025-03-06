@@ -1,9 +1,9 @@
 name: list AWS EC2 Instance
 
 on:
-  workflow_dispatch:  # Manual trigger (runs only the 1st job)
+  workflow_dispatch: 
   schedule:
-    - cron: '0 23 * * *'  # Runs every day at 11:00 PM UTC (only the 2nd job)
+    - cron: '32 11 * * *'
 
 jobs:
    List-EC2-Instances1:
