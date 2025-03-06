@@ -8,6 +8,8 @@ on:
   schedule:
     - cron: '20 12 * * *'
 
+  workflow_dispatch: 
+
 jobs:
    List-EC2-Instances1:
     if: github.event_name == 'push'  # Runs only on manual trigger
