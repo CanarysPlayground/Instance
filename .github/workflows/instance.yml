@@ -1,11 +1,13 @@
-
 name: list AWS EC2 Instance
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:  # Manual trigger (runs only the 1st job)
+  schedule:
+    - cron: '0 23 * * *'  # Runs every day at 11:00 PM UTC (only the 2nd job)
 
 jobs:
    List-EC2-Instances1:
+    if: github.event_name == 'workflow_dispatch'  # Runs only on manual trigger
     runs-on: ubuntu-latest
 
     steps:
@@ -15,8 +17,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        aws-access-key-id: "AKIA6JKESXY2NB5F65KEP"
-        aws-secret-access-key: "Z9vmhdSTIPoQIuSyQuSgmjxfsrqO8I+bvL5MZ14es"
+        aws-access-key-id: "AKIA6JKEXY2NB5F65KEP"
+        aws-secret-access-key: "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"
         aws-region: "ap-south-1"
 
     - name: List EC2 Instances
@@ -31,9 +33,9 @@ jobs:
         fi
 
    List-EC2-Instances2:
+     if: github.event_name == 'schedule'
      runs-on: ubuntu-latest
      environment: instancetest
-     needs: List-EC2-Instances1
 
      steps:
        - name: Checkout repository
