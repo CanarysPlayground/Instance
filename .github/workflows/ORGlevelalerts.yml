@@ -1,0 +1,25 @@
+name: Export GitHub Advanced Security Data for Organization to CSV
+on:
+  push:
+jobs:
+  export-org-security-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4  
+
+      - name: Run GitHub Advanced Security to CSV for Organization
+        uses: advanced-security/ghas-to-csv@v3
+        env:
+          GITHUB_PAT: ${{ secrets.PAT }}
+          GITHUB_REPORT_SCOPE: "organization"    
+          SCOPE_NAME: "CanarysPlayground"        
+          FEATURES: "secretscanning,codescanning,dependabot" 
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  
+
+      - name: Upload CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: org-ghas-data
+          path: "*.csv"
+          if-no-files-found: warn
