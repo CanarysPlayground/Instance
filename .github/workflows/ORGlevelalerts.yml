@@ -1,4 +1,4 @@
-name: Export GitHub Advanced Security Data for Organization to CSV
+name: Export GHAS Data of ORG
 on:
   push:
 jobs:
