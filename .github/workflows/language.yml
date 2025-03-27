@@ -1,9 +1,6 @@
 name: Generate Language Report
 
 on:
-  push:
-    branches:
-      - main
   schedule:
     - cron: '0 0 * * 1'  # Runs every Monday at midnight UTC
   workflow_dispatch:  # Allows manual trigger
@@ -36,21 +33,36 @@ jobs:
 
           ORG_NAME = os.getenv("ORG_NAME")
           TOKEN = os.getenv("GITHUB_TOKEN")
-          HEADERS = {"Authorization": f"token {TOKEN}"}
+          HEADERS = {"Authorization": f"Bearer {TOKEN}"}
           
           def get_repos():
               repos = []
               url = f"https://api.github.com/orgs/{ORG_NAME}/repos?per_page=100"
               while url:
-                  response = requests.get(url, headers=HEADERS).json()
-                  repos.extend(response)
-                  url = response.links['next']['url'] if 'next' in response.links else None
+                  response = requests.get(url, headers=HEADERS)
+                  if response.status_code != 200:
+                      print("Error fetching repositories:", response.text)
+                      break
+                  repos.extend(response.json())
+
+                  # Handle pagination
+                  link_header = response.headers.get("Link", "")
+                  next_url = None
+                  for link in link_header.split(","):
+                      if 'rel="next"' in link:
+                          next_url = link.split(";")[0].strip("<> ")
+                  url = next_url  # Update URL for next page
+              
               return [repo['name'] for repo in repos]
 
           def get_languages(repo):
               url = f"https://api.github.com/repos/{ORG_NAME}/{repo}/languages"
-              response = requests.get(url, headers=HEADERS).json()
-              return response
+              response = requests.get(url, headers=HEADERS)
+              if response.status_code == 200:
+                  return response.json()
+              else:
+                  print(f"Error fetching languages for {repo}: {response.text}")
+                  return {}
 
           repos = get_repos()
           data = []
