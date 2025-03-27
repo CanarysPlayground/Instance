@@ -6,41 +6,67 @@ on:
       - main
   schedule:
     - cron: '0 0 * * 1'  # Runs every Monday at midnight UTC
-    
-  workflow_dispatch:  
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
-  language-report:
+  fetch-languages:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Fetch Repository List
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Fetching repository list..."
-          curl -s -H "Authorization: token $GITHUB_TOKEN" \
-               "https://api.github.com/user/repos?per_page=100" > repos.json
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
-      - name: Fetch Languages
+      - name: Install Dependencies
+        run: pip install requests pandas
+
+      - name: Fetch Language Data
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ensure it has org read permissions
+          ORG_NAME: "your-org-name"
         run: |
-          echo "# Repository Language Report" > languages_report.md
-          echo "" >> languages_report.md
+          python <<EOF
+          import requests
+          import pandas as pd
+          import os
+
+          ORG_NAME = os.getenv("ORG_NAME")
+          TOKEN = os.getenv("GITHUB_TOKEN")
+          HEADERS = {"Authorization": f"token {TOKEN}"}
           
-          jq -r '.[].full_name' repos.json | while read repo; do
-            LANGUAGES=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                             "https://api.github.com/repos/$repo/languages" | jq -r 'keys | join(", ")')
-            echo "- **$repo**: $LANGUAGES" >> languages_report.md
-          done
+          def get_repos():
+              repos = []
+              url = f"https://api.github.com/orgs/{ORG_NAME}/repos?per_page=100"
+              while url:
+                  response = requests.get(url, headers=HEADERS).json()
+                  repos.extend(response)
+                  url = response.links['next']['url'] if 'next' in response.links else None
+              return [repo['name'] for repo in repos]
 
-      - name: Commit & Push Report
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git add languages_report.md
-          git commit -m "Updated repository language report" || echo "No changes to commit"
-          git push
+          def get_languages(repo):
+              url = f"https://api.github.com/repos/{ORG_NAME}/{repo}/languages"
+              response = requests.get(url, headers=HEADERS).json()
+              return response
+
+          repos = get_repos()
+          data = []
+
+          for repo in repos:
+              languages = get_languages(repo)
+              for lang, bytes_used in languages.items():
+                  data.append([repo, lang, bytes_used])
+
+          df = pd.DataFrame(data, columns=["Repository", "Language", "Bytes Used"])
+          df.to_csv("language_report.csv", index=False)
+          print(df)
+          EOF
+
+      - name: Upload Report as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: language-report
+          path: language_report.csv
