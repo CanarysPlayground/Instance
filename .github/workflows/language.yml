@@ -3,8 +3,8 @@ name: Generate Language Report
 on:
   schedule:
     - cron: '0 0 * * 1'  # Runs every Monday at midnight UTC
-  workflow_dispatch:  # Allows manual trigger
-
+  workflow_dispatch: 
+  
 jobs:
   fetch-languages:
     runs-on: ubuntu-latest
@@ -23,18 +23,19 @@ jobs:
 
       - name: Fetch Language Data
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ensure it has org read permissions
-          ORG_NAME: "your-org-name"
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          ORG_NAME: "CanarysPlayground"
         run: |
           python <<EOF
           import requests
           import pandas as pd
           import os
+          import time
 
           ORG_NAME = os.getenv("ORG_NAME")
           TOKEN = os.getenv("GITHUB_TOKEN")
           HEADERS = {"Authorization": f"Bearer {TOKEN}"}
-          
+
           def get_repos():
               repos = []
               url = f"https://api.github.com/orgs/{ORG_NAME}/repos?per_page=100"
@@ -45,14 +46,14 @@ jobs:
                       break
                   repos.extend(response.json())
 
-                  # Handle pagination
+                  # Handle pagination correctly
                   link_header = response.headers.get("Link", "")
                   next_url = None
                   for link in link_header.split(","):
                       if 'rel="next"' in link:
                           next_url = link.split(";")[0].strip("<> ")
                   url = next_url  # Update URL for next page
-              
+
               return [repo['name'] for repo in repos]
 
           def get_languages(repo):
@@ -65,12 +66,15 @@ jobs:
                   return {}
 
           repos = get_repos()
+          print(f"Total repositories fetched: {len(repos)}")  # Debugging statement
+
           data = []
 
           for repo in repos:
               languages = get_languages(repo)
               for lang, bytes_used in languages.items():
                   data.append([repo, lang, bytes_used])
+              time.sleep(1)  # Prevent hitting API rate limits
 
           df = pd.DataFrame(data, columns=["Repository", "Language", "Bytes Used"])
           df.to_csv("language_report.csv", index=False)
