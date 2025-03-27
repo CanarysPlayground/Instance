@@ -2,9 +2,9 @@ name: Generate Language Report
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Runs every Monday at midnight UTC
-  workflow_dispatch: 
-  
+    - cron: '0 0 * * 1'  
+  workflow_dispatch:  
+
 jobs:
   fetch-languages:
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
 
       - name: Fetch Language Data
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  # Ensure it has org read permissions
           ORG_NAME: "CanarysPlayground"
         run: |
           python <<EOF
@@ -72,11 +72,12 @@ jobs:
 
           for repo in repos:
               languages = get_languages(repo)
-              for lang, bytes_used in languages.items():
-                  data.append([repo, lang, bytes_used])
+              if languages:
+                  language_list = "\n".join(languages.keys())  # Combine languages into one cell
+                  data.append([repo, language_list])
               time.sleep(1)  # Prevent hitting API rate limits
 
-          df = pd.DataFrame(data, columns=["Repository", "Language", "Bytes Used"])
+          df = pd.DataFrame(data, columns=["Repository", "Languages"])
           df.to_csv("language_report.csv", index=False)
           print(df)
           EOF
