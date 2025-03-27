@@ -1,0 +1,32 @@
+name: Export Security Alerts
+
+on:
+  schedule:
+    - cron: '0 12 * * *' # Runs every day at 12 PM UTC
+
+jobs:
+  fetch_alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch security alerts
+        run: |
+          curl -H "Accept: application/vnd.github+json" \
+               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+               -H "X-GitHub-Api-Version: 2024-03-06" \
+               "https://api.github.com/repos/${{ github.repository }}/dependabot/alerts?state=open" > alerts.json
+
+      - name: Convert JSON to CSV
+        run: python convert_json_to_csv.py
+
+      - name: Convert CSV to PDF
+        run: python convert_csv_to_pdf.py
+
+      - name: Upload report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-alerts
+          path: security_alerts.*
+
