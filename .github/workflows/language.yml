@@ -1,0 +1,46 @@
+name: Generate Language Report
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * 1'  # Runs every Monday at midnight UTC
+    
+  workflow_dispatch:  
+
+jobs:
+  language-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Fetch Repository List
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching repository list..."
+          curl -s -H "Authorization: token $GITHUB_TOKEN" \
+               "https://api.github.com/user/repos?per_page=100" > repos.json
+
+      - name: Fetch Languages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "# Repository Language Report" > languages_report.md
+          echo "" >> languages_report.md
+          
+          jq -r '.[].full_name' repos.json | while read repo; do
+            LANGUAGES=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                             "https://api.github.com/repos/$repo/languages" | jq -r 'keys | join(", ")')
+            echo "- **$repo**: $LANGUAGES" >> languages_report.md
+          done
+
+      - name: Commit & Push Report
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add languages_report.md
+          git commit -m "Updated repository language report" || echo "No changes to commit"
+          git push
