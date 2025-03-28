@@ -11,12 +11,29 @@ jobs:
       - name: OWASP Top 10
         uses: KittyChiu/alerts-to-owasp10@v0.1.2
         env:
-            ORGANISATION: ${{ github.repository_owner }}
-            GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-            GITHUB_REPORT_SCOPE: "organization"
-            SCOPE_NAME: "CanarysPlayground"
+          ORGANISATION: ${{ github.repository_owner }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_REPORT_SCOPE: "organization"
+          SCOPE_NAME: "CanarysPlayground"
 
-      - name: Upload CSV
+      - name: Filter Top 10 Alerts per Repository
+        run: |
+          pip install pandas
+          python - <<EOF
+          import pandas as pd
+          import glob
+
+          # Load all CSV files matching the pattern
+          csv_files = glob.glob("*.csv")
+          for file in csv_files:
+              df = pd.read_csv(file)
+              # Ensure the DataFrame is sorted by severity or date before taking the top 10
+              df_sorted = df.sort_values(by=['severity', 'date'], ascending=[False, False])
+              df_filtered = df_sorted.groupby('repo_name').head(10)
+              df_filtered.to_csv(file, index=False)
+          EOF
+
+      - name: Upload Filtered CSV
         uses: actions/upload-artifact@v4
         with:
           name: org-ghas-data
