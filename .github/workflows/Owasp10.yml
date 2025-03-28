@@ -22,16 +22,19 @@ jobs:
           python - <<EOF
           import pandas as pd
           import glob
-
+      
           # Load all CSV files matching the pattern
           csv_files = glob.glob("*.csv")
           for file in csv_files:
               df = pd.read_csv(file)
-              # Ensure the DataFrame is sorted by severity or date before taking the top 10
-              df_sorted = df.sort_values(by=['severity', 'date'], ascending=[False, False])
-              df_filtered = df_sorted.groupby('repo_name').head(10)
+              print(f"Processing {file}:")
+              print(df.columns)  # Print columns to verify their names
+              # Adjust column names as per your CSV structure
+              df_sorted = df.sort_values(by=['Severity', 'Date'], ascending=[False, False])
+              df_filtered = df_sorted.groupby('Repo_Name').head(10)
               df_filtered.to_csv(file, index=False)
           EOF
+
 
       - name: Upload Filtered CSV
         uses: actions/upload-artifact@v4
