@@ -1,58 +1,69 @@
 name: alerts-to-owasp10
+
 on:
   push:
-    branches:
-      - main  
 
 jobs:
   export-org-security-data:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: OWASP Top 10 Alerts
+        uses: actions/checkout@v4  
+
+      - name: OWASP Top 10
         uses: KittyChiu/alerts-to-owasp10@v0.1.2
         env:
           ORGANISATION: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GITHUB_REPORT_SCOPE: "organization"
           SCOPE_NAME: "CanarysPlayground"
-      
-      - name: Process and Filter Alerts
+
+      - name: Filter Top 10 Alerts per Repository
         run: |
           pip install pandas
-          python << EOF
+          python - <<EOF
           import pandas as pd
           import glob
-          import os
-
+      
+          # Map OWASP risks to severity scores
+          severity_map = {
+              'A01:2021': 'High',  # Broken Access Control
+              'A08:2021': 'Medium'  # Software and Data Integrity Failures
+          }
+      
           # Load all CSV files
           csv_files = glob.glob("*.csv")
-          
           for file in csv_files:
-              try:
-                  # Read the CSV file
-                  df = pd.read_csv(file)
-                  
-                  # Sort by severity (descending) and date (descending)
-                  # Assumes columns 'Severity' and 'Date' exist
-                  df_sorted = df.sort_values(by=['Severity', 'Date'], ascending=[False, False])
-                  
-                  # Group by repository and take top 10 alerts
-                  df_filtered = df_sorted.groupby('Repo_Name').apply(lambda x: x.head(10)).reset_index(drop=True)
-                  
-                  # Save the filtered results
-                  df_filtered.to_csv(file, index=False)
-                  
-                  print(f"Processed {file}: Filtered to top 10 alerts")
-              except Exception as e:
-                  print(f"Error processing {file}: {e}")
+              df = pd.read_csv(file)
+              print(f"Processing {file}:")
+              print(df.columns)
+              
+              # Rename columns for consistency
+              df = df.rename(columns={'repo_nam': 'Repo_Name'})
+              
+              # Extract severity from risk column
+              df['Severity'] = df['risk'].str.split(' ').str[0].map(severity_map)
+              
+              # Convert Severity to numerical for sorting
+              severity_order = {'High': 3, 'Medium': 2, 'Low': 1}
+              df['Severity_Score'] = df['Severity'].map(severity_order).fillna(0)
+              
+              # Sort by Severity_Score and alert_no (as a proxy for recency)
+              df_sorted = df.sort_values(by=['Severity_Score', 'alert_no'], ascending=[False, False])
+              
+              # Group by Repo_Name and take top 10
+              df_filtered = df_sorted.groupby('Repo_Name').head(10)
+              
+              # Drop temporary columns
+              df_filtered = df_filtered.drop(columns=['Severity_Score'])
+              
+              # Save back to CSV
+              df_filtered.to_csv(file, index=False)
           EOF
-      
+
       - name: Upload Filtered CSV
         uses: actions/upload-artifact@v4
         with:
-          name: top-10-owasp-alerts
+          name: org-ghas-data
           path: "*.csv"
           if-no-files-found: warn
