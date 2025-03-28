@@ -1,86 +1,91 @@
 name: Generate Language Report
 
 on:
+  workflow_dispatch:  
   schedule:
     - cron: '0 0 * * 1'  
-  workflow_dispatch:  
 
 jobs:
-  fetch-languages:
+  generate_report:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.9'
 
-      - name: Install Dependencies
-        run: pip install requests pandas
+      - name: Install dependencies
+        run: pip install requests pandas openpyxl
 
-      - name: Fetch Language Data
+      - name: Fetch repository language data
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  # Ensure it has org read permissions
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           ORG_NAME: "CanarysPlayground"
         run: |
-              import requests
-              import pandas as pd
-              import os
-              import time
-              
-              ORG_NAME = "your-org-name"  # Change to your GitHub org
-              TOKEN = os.getenv("GITHUB_TOKEN")
-              HEADERS = {"Authorization": f"Bearer {TOKEN}"}
-              
-              def get_repos():
-                  repos = []
-                  url = f"https://api.github.com/orgs/{ORG_NAME}/repos?per_page=100"
-                  while url:
-                      response = requests.get(url, headers=HEADERS)
-                      if response.status_code != 200:
-                          print("Error fetching repositories:", response.text)
-                          break
-                      repos.extend(response.json())
-              
-                      # Handle pagination
-                      link_header = response.headers.get("Link", "")
-                      next_url = None
-                      for link in link_header.split(","):
-                          if 'rel="next"' in link:
-                              next_url = link.split(";")[0].strip("<> ")
-                      url = next_url
-              
-                  return [repo['name'] for repo in repos]
-              
-              def get_languages(repo):
-                  url = f"https://api.github.com/repos/{ORG_NAME}/{repo}/languages"
-                  response = requests.get(url, headers=HEADERS)
-                  if response.status_code == 200:
-                      return response.json()
-                  else:
-                      print(f"Error fetching languages for {repo}: {response.text}")
-                      return {}
-              
-              repos = get_repos()
-              data = []
-              
-              for repo in repos:
-                  languages = get_languages(repo)
-                  if languages:
-                      language_list = "\n".join(languages.keys())  # Format correctly for Excel
-                      data.append([repo, language_list])
-                  time.sleep(1)  # Prevent hitting API rate limits
-              
-              df = pd.DataFrame(data, columns=["Repository", "Languages"])
-              df.to_excel("language_report.xlsx", index=False)  # Save as Excel file
-              
-              print("Language report generated successfully!")
+          python <<EOF
+          import requests
+          import pandas as pd
+          import os
+          import time
 
-      - name: Upload Report as Artifact
+          ORG_NAME = os.getenv("ORG_NAME")
+          TOKEN = os.getenv("GITHUB_TOKEN")
+
+          HEADERS = {"Authorization": f"Bearer {TOKEN}"}
+
+          def get_repos():
+              repos = []
+              url = f"https://api.github.com/orgs/{ORG_NAME}/repos?per_page=100"
+              
+              while url:
+                  response = requests.get(url, headers=HEADERS)
+                  if response.status_code != 200:
+                      print("Error fetching repositories:", response.text)
+                      break
+
+                  repos.extend(response.json())
+
+                  # Handle pagination
+                  link_header = response.headers.get("Link", "")
+                  next_url = None
+                  for link in link_header.split(","):
+                      if 'rel="next"' in link:
+                          next_url = link.split(";")[0].strip("<> ")
+                  url = next_url
+
+              return [repo['name'] for repo in repos]
+
+          def get_languages(repo):
+              url = f"https://api.github.com/repos/{ORG_NAME}/{repo}/languages"
+              response = requests.get(url, headers=HEADERS)
+              if response.status_code == 200:
+                  return response.json()
+              else:
+                  print(f"Error fetching languages for {repo}: {response.text}")
+                  return {}
+
+          repos = get_repos()
+          data = []
+
+          for repo in repos:
+              languages = get_languages(repo)
+              if languages:
+                  language_list = "\n".join(languages.keys())  # Format for Excel (line breaks)
+                  data.append([repo, language_list])
+              time.sleep(1)
+
+          df = pd.DataFrame(data, columns=["Repository", "Languages"])
+          df.to_excel("language_report.xlsx", index=False)
+
+          print("✅ Report generated: language_report.xlsx")
+          EOF
+
+      - name: Upload language report
         uses: actions/upload-artifact@v4
         with:
           name: language-report
-          path: language_report.csv
+          path: language_report.xlsx
