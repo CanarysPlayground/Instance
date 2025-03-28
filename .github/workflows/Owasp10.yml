@@ -38,8 +38,8 @@ jobs:
               print(f"Processing {file}:")
               print(df.columns)
               
-              # Rename columns for consistency
-              df = df.rename(columns={'repo_nam': 'Repo_Name'})
+              # Rename columns for consistency (fix: repo_name to Repo_Name)
+              df = df.rename(columns={'repo_name': 'Repo_Name'})
               
               # Extract severity from risk column
               df['Severity'] = df['risk'].str.split(' ').str[0].map(severity_map)
