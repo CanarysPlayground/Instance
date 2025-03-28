@@ -1,0 +1,32 @@
+name: Dependent on approval Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run build
+        run: echo "Building the project..."
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run tests
+        run: echo "Running tests..."
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production  # This is 'production' environment
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Deploy
+        run: echo "Deploying the project..."
