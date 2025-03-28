@@ -1,43 +1,27 @@
-name: Fetch Open Alerts
-
+name: Export Open GHAS Alerts of ORG
 on:
-  workflow_dispatch:
+  workflow_dispatch:  
+  schedule:
+    - cron: "0 0 * * 1" 
 
 jobs:
-  fetch-alerts:
+  export-org-security-data:
     runs-on: ubuntu-latest
     steps:
-      - name: Get All Repositories in Organization
+      - name: Checkout code
+        uses: actions/checkout@v4  
+
+      - name: Export Open Alerts to CSV
+        uses: advanced-security/ghas-to-csv@v3
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          ORG_NAME: "CanarysPlayground"
-        run: |
-          curl -s -H "Authorization: Bearer $GH_TOKEN" \
-               "https://api.github.com/orgs/CanarysPlayground/repos?per_page=100" \
-               | jq -r '.[].name' > repo_list.txt
+          GH_TOKEN: ${{ secrets.GH_TOKEN }} 
+          GITHUB_REPORT_SCOPE: "organization"
+          SCOPE_NAME: "CanarysPlayground"
+          GITHUB_ALERT_STATUS: "open"  
 
-      - name: Fetch Open Code Scanning Alerts
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          ORG_NAME: "CanarysPlayground"
-        run: |
-          echo "Fetching alerts..."
-          echo "[" > all_alerts.json
-          while read repo; do
-            echo "Fetching alerts for $repo..."
-            curl -s -H "Accept: application/vnd.github+json" \
-                 -H "Authorization: Bearer $GH_TOKEN" \
-                 "https://api.github.com/repos/$ORG_NAME/$repo/code-scanning/alerts?state=open" \
-                 | jq --arg repo "$repo" '[.[] | .repository=$repo]' >> all_alerts.json
-          done < repo_list.txt
-          echo "]" >> all_alerts.json
-
-      - name: Display Alerts Summary
-        run: |
-          jq '.' all_alerts.json
-
-      - name: Upload Alerts as Artifact
+      - name: Upload CSV
         uses: actions/upload-artifact@v4
         with:
-          name: code-scanning-alerts
-          path: all_alerts.json
+          name: open-ghas-alerts
+          path: "./**/*.csv"
+          if-no-files-found: warn
