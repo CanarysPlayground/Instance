@@ -1,0 +1,12 @@
+name: 'Dependency Review'
+on: [pull_request]  # Triggers the workflow on pull requests
+permissions:
+  contents: read    # Required to read the repository contents
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest  # Use a GitHub-hosted runner
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4  # Checks out your code
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v4  # Runs the dependency review action
