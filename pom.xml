@@ -18,6 +18,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.14.1</version> <!-- Known critical vulnerability (Log4Shell - CVE-2021-44228) -->
+    </dependency>
+  </dependencies>
+
 
   <build>
     <finalName>MyWebApp</finalName>
