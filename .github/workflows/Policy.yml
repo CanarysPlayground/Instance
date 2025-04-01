@@ -1,11 +1,11 @@
 name: Security Policy Enforcement
 
 on:
-  push: 
+  # push: 
   
-  # pull_request:
-  #   branches:
-  #     - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   policy-check:
