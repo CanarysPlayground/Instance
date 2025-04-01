@@ -1,0 +1,14 @@
+general:
+  remediate:
+    error: 7  # Errors must be fixed within 7 days
+dependabot:
+  remediate:
+    critical: 7   # Critical vulnerabilities: 7 days
+    high: 14      # High vulnerabilities: 14 days
+    moderate: 30  # Moderate vulnerabilities: 30 days
+secretscanning:
+  remediate:
+    critical: 7   # Secrets must be addressed in 7 days
+licensing:
+  deny:
+    - GPL-3.0   # Block dependencies with GPL-3.0 license
