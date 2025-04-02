@@ -4,8 +4,25 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+      # day: "monday"
+      time: "10:37"
+      timezone: "Asia/Kolkata"
     open-pull-requests-limit: 5
     target-branch: "main"
     # ignore:
     #   - dependency-name: "junit:junit"
     #     versions: ["4.x"]
+    labels:
+      - "dependencies"
+      - "maven"
+    # milestone: 42
+    # reviewers:
+    #   - "dev-team/reviewers"
+    # assignees:
+    #   - "username1"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    versioning-strategy: "increase" #auto #increase-if-necessary
+    # allow:
+    #   - dependency-type: "production"
