@@ -22,7 +22,7 @@ updates:
     #   - "username1"
     commit-message:
       prefix: "deps"
-      include: "scope"
+      include: "everything"
     # versioning-strategy: "increase" #auto #increase-if-necessary
     # allow:
     #   - dependency-type: "production"
