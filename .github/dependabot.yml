@@ -22,7 +22,8 @@ updates:
     #   - "username1"
     commit-message:
       prefix: "deps"
-      include: "everything"
+      prefix-development: "deps-dev"
+      include: "scope"
     # versioning-strategy: "increase" #auto #increase-if-necessary
     # allow:
     #   - dependency-type: "production"
