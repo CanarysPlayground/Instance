@@ -7,33 +7,47 @@ jobs:
   export-all-alerts:
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Set up variables
-        env:
-          GH_PAT: ${{ secrets.GH_TOKEN }}
-        run: |
-          echo "ORG=my-org-name" >> $GITHUB_ENV
-          echo "TOKEN=$GH_TOKEN" >> $GITHUB_ENV
+    env:
+      ORG: CanarysPlayground
+      GH_PAT: ${{ secrets.GH_TOKEN }}
 
-      - name: Fetch all repos in org
+    steps:
+      - name: Check API auth and fetch repos
         id: fetch-repos
         run: |
-          curl -s -H "Authorization: token $TOKEN" \
-               "https://api.github.com/orgs/$ORG/repos?per_page=100&type=all" \
-               | jq -r '.[].full_name' > repos.txt
+          echo "🔐 Testing GitHub API access for org: $ORG"
+          response=$(curl -s -H "Authorization: token $GH_PAT" \
+                          "https://api.github.com/orgs/$ORG/repos?per_page=100&type=all")
 
-      - name: Export code scanning alerts for each repo
+          echo "$response" | jq type > /dev/null 2>&1 || {
+            echo "❌ Failed to parse response. Raw output:"
+            echo "$response"
+            exit 1
+          }
+
+          echo "$response" | jq -r '.[].full_name' > repos.txt
+
+          if [ ! -s repos.txt ]; then
+            echo "❌ No repositories found or insufficient permissions."
+            echo "$response"
+            exit 1
+          fi
+
+          echo "✅ Repositories fetched:"
+          cat repos.txt
+
+      - name: Export code scanning alerts per repo
         run: |
           mkdir -p results
           while read repo; do
-            echo "Fetching alerts for $repo..."
-            curl -s -H "Authorization: token $TOKEN" \
+            echo "🔍 Fetching alerts for $repo..."
+            curl -s -H "Authorization: token $GH_PAT" \
                  -H "Accept: application/vnd.github+json" \
                  "https://api.github.com/repos/$repo/code-scanning/alerts?per_page=100" \
                  -o "results/${repo//\//_}_alerts.json"
           done < repos.txt
 
-      - name: Upload all alerts as artifact
+      - name: Upload results as artifact
         uses: actions/upload-artifact@v4
         with:
           name: org-code-scanning-alerts
