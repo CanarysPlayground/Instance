@@ -1,0 +1,35 @@
+name: Forward Code & Secret Scanning Alerts to Datadog
+
+on:
+  secret_scanning_alert:
+    types: [created, resolved, reopened]
+  code_scanning_alert:
+    types: [created, reopened]
+
+  workflow_dispatch:
+
+jobs:
+  send-to-datadog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send alert to Datadog
+        env:
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+          EVENT_TYPE: ${{ github.event_name }}
+        run: |
+          echo "Formatting payload for $EVENT_TYPE"
+
+          # Create JSON payload file
+          echo '{
+            "title": "[GitHub Alert] '"$EVENT_TYPE"' for '${{ github.repository }}'",
+            "text": "GitHub '${{ github.event_name }}' alert triggered in repo: '${{ github.repository }}' by '${{ github.actor }}'\n\nDetails:\n```\n'"$(echo '${{ toJson(github.event) }}' | jq .)"'\n```",
+            "tags": ["github", "security", "'"$EVENT_TYPE"'"],
+            "alert_type": "error"
+          }' > payload.json
+
+          # Send to Datadog
+          curl -X POST "https://api.datadoghq.com/api/v1/events" \
+            -H "Content-Type: application/json" \
+            -H "DD-API-KEY: $DATADOG_API_KEY" \
+            -d @payload.json
