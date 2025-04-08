@@ -1,31 +1,21 @@
-name: Forward Code & Secret Scanning Alerts to Datadog
+name: Send logs to Datadog
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
-  
 jobs:
-  send-to-datadog:
+  log_to_datadog:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Send alert to Datadog
-        env:
-          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
-          EVENT_TYPE: ${{ github.event_name }}
+      - name: Send log to Datadog
         run: |
-          echo "Formatting payload for $EVENT_TYPE"
-
-          # Create JSON payload file
-          echo '{
-            "title": "[GitHub Alert] '"$EVENT_TYPE"' for '${{ github.repository }}'",
-            "text": "GitHub '${{ github.event_name }}' alert triggered in repo: '${{ github.repository }}' by '${{ github.actor }}'\n\nDetails:\n```\n'"$(echo '${{ toJson(github.event) }}' | jq .)"'\n```",
-            "tags": ["github", "security", "'"$EVENT_TYPE"'"],
-            "alert_type": "error"
-          }' > payload.json
-
-          # Send to Datadog
-          curl -X POST "https://api.datadoghq.com/api/v1/events" \
+          curl -X POST "https://http-intake.logs.datadoghq.com/v1/input" \
             -H "Content-Type: application/json" \
-            -H "DD-API-KEY: $DATADOG_API_KEY" \
-            -d @payload.json
+            -H "DD-API-KEY: ${{ secrets.DATADOG_API_KEY }}" \
+            -d '{
+              "message": "New push event on main branch",
+              "ddsource": "github",
+              "service": "ci-pipeline"
+            }'
