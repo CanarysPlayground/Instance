@@ -13,11 +13,11 @@ jobs:
     steps:
       - name: Send log to Datadog
         run: |
-          curl -X POST "https://http-intake.logs.datadoghq.com/v1/input" \
-            -H "Content-Type: application/json" \
-            -H "DD-API-KEY: ${{ secrets.DATADOG_API_KEY }}" \
-            -d '{
-              "message": "New push event on main branch",
-              "ddsource": "github",
-              "service": "ci-pipeline"
-            }'
+          curl -X POST "https://http-intake.logs.us5.datadoghq.com/v1/input" \
+          -H "Content-Type: application/json" \
+          -H "DD-API-KEY: ${{ secrets.DATADOG_API_KEY }}" \
+          -d '{
+                "message": "GitHub push event",
+                "ddsource": "github",
+                "service": "ci-pipeline"
+              }'
