@@ -1,11 +1,6 @@
 name: Forward Code & Secret Scanning Alerts to Datadog
 
 on:
-  secret_scanning_alert:
-    types: [created, resolved, reopened]
-  code_scanning_alert:
-    types: [created, reopened]
-
   workflow_dispatch:
 
 jobs:
