@@ -2,6 +2,7 @@ name: alerts-to-owasp10
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   export-org-security-data:
